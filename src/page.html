@@ -1,0 +1,55 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>graphite render</title>
+<script type="importmap">
+  {
+    "imports": {
+      "@bareminimum/graphite": "/graphite/index.js",
+      "@bareminimum/graphite/pencil": "/graphite/brushes/pencil/index.js",
+      "path-data-parser": "/path-data-parser/index.js",
+      "svg-path-properties": "/svg-path-properties/main.mjs"
+    }
+  }
+</script>
+<script type="module">
+  import { createRenderer, prepareSvg } from '@bareminimum/graphite'
+  import { pencil } from '@bareminimum/graphite/pencil'
+
+  const brushes = { pencil }
+
+  let prepared
+
+  // Checks for WebGL 2 and prepares the artwork. Returns the WebGL renderer name.
+  window.prepareGraphite = async (svg) => {
+    const probe = document.createElement('canvas').getContext('webgl2')
+    if (!probe) throw new Error('WEBGL_UNAVAILABLE')
+    const info = probe.getExtension('WEBGL_debug_renderer_info')
+    const name = probe.getParameter(
+      info ? info.UNMASKED_RENDERER_WEBGL : probe.RENDERER,
+    )
+    probe.getExtension('WEBGL_lose_context')?.loseContext()
+    prepared = await prepareSvg(svg)
+    return String(name)
+  }
+
+  // Returns a PNG data URL of the completed drawing, or throws with a readable message.
+  window.drawGraphite = ({ width, height, brush = 'pencil', color, style }) => {
+    if (!Object.hasOwn(brushes, brush))
+      throw new Error(`Unknown brush "${brush}"`)
+    const artwork = prepared
+    const canvas = document.createElement('canvas')
+    const renderer = createRenderer(canvas, {
+      artwork,
+      brush: brushes[brush],
+      width,
+      height,
+    })
+    try {
+      renderer.render({ color, style })
+      return canvas.toDataURL('image/png')
+    } finally {
+      renderer.dispose()
+    }
+  }
+  window.graphiteReady = true
+</script>

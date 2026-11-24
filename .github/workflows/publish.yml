@@ -1,0 +1,65 @@
+name: Publish to npm
+
+on:
+  repository_dispatch:
+    types: [publish-npm]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing GitHub release tag (for example, v0.1.0)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-publish-${{ inputs.tag || github.event.client_payload.tag }}
+
+jobs:
+  publish:
+    if: github.repository == 'BareMinimumHQ/graphite-cli' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.event.client_payload.tag }}
+    steps:
+      - name: Verify release tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Expected a tag of the form vMAJOR.MINOR.PATCH."
+            exit 1
+          fi
+          published=$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+            --json isDraft,isPrerelease --jq '(.isDraft or .isPrerelease) | not')
+          if [[ "$published" != true ]]; then
+            echo "::error::$RELEASE_TAG must be a published GitHub release."
+            exit 1
+          fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ inputs.tag || github.event.client_payload.tag }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - name: Verify package version
+        run: |
+          name=$(node -p 'require("./package.json").name')
+          if [[ "$name" != "@bareminimum/graphite-cli" ]]; then
+            echo "::error::Unexpected package name $name."
+            exit 1
+          fi
+          version=$(node -p 'require("./package.json").version')
+          if [[ "v$version" != "$RELEASE_TAG" ]]; then
+            echo "::error::Package version $version does not match $RELEASE_TAG."
+            exit 1
+          fi
+      - run: npm ci --ignore-scripts
+      - run: npm pack --dry-run
+      - run: npm publish

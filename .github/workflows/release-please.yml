@@ -1,0 +1,35 @@
+name: Release Please
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: release-please
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main' && github.repository == 'BareMinimumHQ/graphite-cli'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        id: release
+      # Events created by GITHUB_TOKEN normally don't trigger workflows.
+      # repository_dispatch starts Publish to npm with its own OIDC identity.
+      - name: Start npm publishing
+        if: steps.release.outputs.release_created == 'true' && vars.NPM_AUTO_PUBLISH == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag_name }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/dispatches" \
+            --method POST \
+            -f event_type=publish-npm \
+            -f "client_payload[tag]=$RELEASE_TAG"
