@@ -1,6 +1,6 @@
 {
   "name": "@bareminimum/graphite-cli",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Render trusted SVG artwork to transparent PNGs with Graphite and Chromium.",
   "keywords": [
     "svg",
