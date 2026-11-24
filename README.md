@@ -41,7 +41,13 @@ For repeatable pixel comparisons, use the same Chromium build and keep software 
 
 ## Browser discovery
 
-Use `--chromium <path>` or set the `GRAPHITE_CHROMIUM` environment variable. If you provide neither, the CLI checks usual install locations on Linux, macOS and Windows. It uses the browser already installed on your machine.
+The CLI checks common Chromium and Chrome install locations on Linux, macOS, and Windows. For a browser installed elsewhere, pass its executable path:
+
+```sh
+npx @bareminimum/graphite-cli bear.svg --output bear.png --chromium /path/to/chromium
+```
+
+Set `GRAPHITE_CHROMIUM` to reuse that path across commands.
 
 Progress is shown in an interactive terminal. On failure, the CLI writes an error to standard error and exits with code 1.
 
