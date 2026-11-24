@@ -209,7 +209,8 @@ test(
 
 test(
   'a rendering session keeps interleaved drawings independent on one context',
-  { ...options, timeout: 30_000 },
+  // Software WebGL needs time to draw all 24 canvases on shared runners.
+  { ...options, timeout: 60_000 },
   async () => {
     const result = await page.evaluate(
       async (markups) => {
