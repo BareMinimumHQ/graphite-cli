@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/BareMinimumHQ/graphite-cli/compare/v0.1.1...v0.1.2) (2026-11-24)
+
+
+### Bug Fixes
+
+* accept Graphite patches with stable stroke culling ([#8](https://github.com/BareMinimumHQ/graphite-cli/issues/8)) ([03ea7b0](https://github.com/BareMinimumHQ/graphite-cli/commit/03ea7b064beb3724aca5bff4151a334aab9d948a))
+
 ## [0.1.1](https://github.com/BareMinimumHQ/graphite-cli/compare/v0.1.0...v0.1.1) (2026-11-24)
 
 
